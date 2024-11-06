@@ -1,6 +1,0 @@
-bentoctl
-bentoml
-boto3
-numpy
-pydantic
-scikit-learn

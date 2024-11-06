@@ -9,7 +9,7 @@ from core import GradientUtils, ImageSiren, PixelDataset
 
 
 # Image loading
-img_ = plt.imread("dog.png")
+img_ = plt.imread("C:\ROBIUL\Mildlyoverfitted\mildlyoverfitted\github_adventures\siren\dog.png")
 downsampling_factor = 4
 img = 2 * (img_ - 0.5)
 img = img[::downsampling_factor, ::downsampling_factor]
@@ -138,4 +138,4 @@ for e in range(n_epochs):
         axs[0, 0].set_title("Ground truth")
         axs[0, 1].set_title("Prediction")
 
-        plt.savefig(f"visualization/{e}.png")
+        plt.savefig(f"C:/ROBIUL/Mildlyoverfitted/mildlyoverfitted/github_adventures/siren/visualization/{e}.png")
