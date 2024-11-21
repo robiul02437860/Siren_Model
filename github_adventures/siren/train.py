@@ -6,10 +6,34 @@ from torch.utils.data import DataLoader
 import tqdm
 
 from core import GradientUtils, ImageSiren, PixelDataset
+import wandb
 
+wandb.login()
+
+wandb.init(
+    # Set the project where this run will be logged
+    project="Siren_model",
+    # Track hyperparameters and run metadata
+    config={
+        "learning_rate": 1e-4,
+        "epochs": 200,
+        "dataset": "mag_vector_field",
+        "model_name": "Siren"
+    }
+)
+
+def rescale_array(arr, new_min=0, new_max=1.0):
+    # Find the minimum and maximum values in the array
+    arr_min, arr_max = arr.min(), arr.max()
+    
+    # Rescale the array to the range [new_min, new_max]
+    scaled_arr = (arr - arr_min) / (arr_max - arr_min) * (new_max - new_min) + new_min
+    
+    return scaled_arr*255
 
 # Image loading
-img_ = plt.imread("C:\ROBIUL\Mildlyoverfitted\mildlyoverfitted\github_adventures\siren\dog.png")
+# img_ = plt.imread("C:\ROBIUL\Mildlyoverfitted\mildlyoverfitted\github_adventures\siren\dog.png")
+img_ = np.load("C:/ROBIUL/Mildlyoverfitted/mildlyoverfitted/github_adventures/siren/saved_array.npy")
 downsampling_factor = 4
 img = 2 * (img_ - 0.5)
 img = img[::downsampling_factor, ::downsampling_factor]
@@ -18,7 +42,7 @@ size = img.shape[0]
 dataset = PixelDataset(img)
 
 # Parameters
-n_epochs = 100
+n_epochs = 20
 batch_size = int(size ** 2)
 logging_freq = 20
 
@@ -93,6 +117,7 @@ for e in range(n_epochs):
         optim.step()
 
     print(e, np.mean(losses))
+    wandb.log({"loss_per_epoch": np.mean(losses)})
 
     if e % logging_freq == 0:
         pred_img = np.zeros_like(img)
@@ -120,22 +145,27 @@ for e in range(n_epochs):
             pred_img_grad_norm[coords_abs[:, 0], coords_abs[:, 1]] = pred_g
             pred_img_laplace[coords_abs[:, 0], coords_abs[:, 1]] = pred_l
 
-        fig, axs = plt.subplots(3, 2, constrained_layout=True)
-        axs[0, 0].imshow(dataset.img, cmap="gray")
-        axs[0, 1].imshow(pred_img, cmap="gray")
+        fig, axs = plt.subplots(1, 2, constrained_layout=True)
+        axs[0].imshow(dataset.img)
+        axs[0].set_axis_off()
+        axs[1].imshow(pred_img)
+        axs[1].set_axis_off()
 
-        axs[1, 0].imshow(dataset.grad_norm, cmap="gray")
-        axs[1, 1].imshow(pred_img_grad_norm, cmap="gray")
+        # axs[1, 0].imshow(dataset.grad_norm)
+        # axs[1, 1].imshow(pred_img_grad_norm)
 
-        axs[2, 0].imshow(dataset.laplace, cmap="gray")
-        axs[2, 1].imshow(pred_img_laplace, cmap="gray")
+        # axs[2, 0].imshow(dataset.laplace)
+        # axs[2, 1].imshow(pred_img_laplace)
 
-        for row in axs:
-            for ax in row:
-                ax.set_axis_off()
+        # for row in axs:
+        #     for ax in row:
+        #         ax.set_axis_off()
 
         fig.suptitle(f"Iteration: {e}")
-        axs[0, 0].set_title("Ground truth")
-        axs[0, 1].set_title("Prediction")
+        # axs[0, 0].set_title("Ground truth")
+        # axs[0, 1].set_title("Prediction")
+        axs[0].set_title("Ground truth")
+        axs[1].set_title("Prediction")
 
         plt.savefig(f"C:/ROBIUL/Mildlyoverfitted/mildlyoverfitted/github_adventures/siren/visualization/{e}.png")
+wandb.finish()
